@@ -2,7 +2,12 @@ package Parser;
 
 import okhttp3.*;
 
+import javax.net.ssl.*;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 
 public class ArticleLoader {
 
@@ -17,21 +22,19 @@ public class ArticleLoader {
     }
 
     private void startLoading() {
-        StringBuilder result = new StringBuilder();
+        final String[] result = new String[1];
+        Request request = new Request.Builder().url(url).build();
 
-        new OkHttpClient()
-                .newCall(new Request.Builder().url(url).build())
-                .enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) { }
+        getUnsafeOkHttpClient().newCall(request).enqueue(new Callback() {
+            @Override public void onFailure(Call call, IOException e) { }
 
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    if(response.body() != null) {
-                        result.append(response.body().string());
-                        create(result.toString());
-                    }
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if(response.body() != null) {
+                    result[0] = response.body().string();
+                    create(result[0]);
                 }
+            }
         });
     }
 
@@ -44,6 +47,46 @@ public class ArticleLoader {
         article.url = url;
 
         callback.onLoaded(article);
+    }
+
+    private static OkHttpClient getUnsafeOkHttpClient() {
+        final X509TrustManager[] trustAllCerts = new X509TrustManager[]{
+                new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                            throws CertificateException { }
+
+                    @Override
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                            throws CertificateException { }
+
+                    @Override
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }
+        };
+
+        OkHttpClient.Builder builder = null;
+        SSLContext sslContext;
+        SSLSocketFactory sslSocketFactory;
+
+        try {
+            sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            sslSocketFactory = sslContext.getSocketFactory();
+
+            builder = new OkHttpClient()
+                    .newBuilder()
+                    .sslSocketFactory(sslSocketFactory, trustAllCerts[0])
+                    .hostnameVerifier((hostname, session) -> true);
+
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
+
+        assert builder != null;
+        return builder.build();
     }
 
 }
