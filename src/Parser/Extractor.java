@@ -19,8 +19,19 @@ class Extractor {
         document = cleaner.clean();
     }
 
-    String detectLang() {
-        lang = "ru";
+    String detectLang(String text) {
+        String lang = "";
+        int stopwordsCount = 0;
+
+        for(String wordsLang : Stopwords.getInstance().stopwords.keySet()) {
+            int count = Stopwords.getInstance().getStopwordsCount(wordsLang, text);
+
+            if(count > stopwordsCount) {
+                stopwordsCount = count;
+                lang = wordsLang;
+            }
+        }
+
         return lang;
     }
 

@@ -23,12 +23,12 @@ public class ContentExtractor extends Extractor {
 
         if(langElements.size() == 0 ||
                 langElements.get(langElements.size() - 1).length() < 2) {
-            return detectLang();
+            lang = detectLang(document.getElementsByTag("body").text());
+        }
+        else  {
+            lang = langElements.get(langElements.size() - 1).substring(0, 2).toLowerCase();
         }
 
-        lang = langElements.get(langElements.size() - 1).substring(0, 2).toLowerCase();
-
-        System.out.println(lang);
         return lang;
     }
 
