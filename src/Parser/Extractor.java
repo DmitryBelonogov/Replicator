@@ -30,6 +30,8 @@ class Extractor {
                 stopwordsCount = count;
                 lang = wordsLang;
             }
+
+            System.out.println("Check " + wordsLang + " " + count);
         }
 
         return lang;
@@ -40,13 +42,14 @@ class Extractor {
     }
 
     Element calculateBestElement() {
+        System.out.println("calculateBestElement");
         Elements elementsText = new Elements();
         Elements elementsToCheck = getElementsToCheck();
 
         for(Element elementToCheck: elementsToCheck) {
-            elementsToCheck.attr("score", String.valueOf(isHighlinkDensity(elementToCheck)));
             if(Stopwords.getInstance().getStopwordsCount(lang, elementToCheck.text()) > 4 &&
                     !isHighlinkDensity(elementToCheck)) {
+                elementToCheck.attr("isHighlinkDensity", String.valueOf(isHighlinkDensity(elementToCheck)));
                 elementsText.add(elementToCheck);
             }
         }
@@ -57,6 +60,7 @@ class Extractor {
         for(Element elementText: elementsText) {
             int score = Stopwords.getInstance().getStopwordsCount(lang, elementText.text());
 
+            elementText.attr("score", String.valueOf(score));
             if(score > topScore) {
                 topScore = score;
                 topElement = elementText;
@@ -90,12 +94,13 @@ class Extractor {
         elements.addAll(document.getElementsByTag("pre"));
         elements.addAll(document.getElementsByTag("td"));
         elements.addAll(document.getElementsByTag("div"));
+        elements.addAll(document.getElementsByTag("section"));
 
         return elements;
     }
 
     String getElementAttr(String element, String attr) {
-        Elements elements = document.getElementsByTag("html");
+        Elements elements = document.getElementsByTag(element);
 
         return elements.get(0).attr(attr) != null ? elements.get(0).attr(attr) : "";
     }
@@ -119,7 +124,7 @@ class Extractor {
         return values;
     }
 
-    public ArrayList<String> getMetaProperties(String metaTag) {
+    ArrayList<String> getMetaProperties(String metaTag) {
         ArrayList<String> values = new ArrayList<>();
 
         Elements elements = document.select("meta[property=" + metaTag + "]");
@@ -131,7 +136,7 @@ class Extractor {
         return values;
     }
 
-    public String getMetaProperty(String metaTag) {
+    String getMetaProperty(String metaTag) {
         Elements elements = document.select("meta[property=" + metaTag + "]");
 
         return elements.size() > 0 ?

@@ -4,15 +4,15 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class Cleaner {
+class Cleaner {
 
-    String[] elementsToRemove = ("comment header footer menu meta banner hidden nav auth").split(" ");
+    String[] elementsToRemove = ("comment header footer menu banner auth").split(" ");
 
     Document document;
 
     private Elements elements;
 
-    public Cleaner() {
+    Cleaner() {
         elements = new Elements();
     }
 

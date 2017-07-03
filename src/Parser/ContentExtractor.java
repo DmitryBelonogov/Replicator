@@ -61,7 +61,7 @@ public class ContentExtractor extends Extractor {
             contentElement = calculateBestElement();
         }
 
-        return contentElement.html();
+        return document.html();
     }
 
     public String getContentText() {

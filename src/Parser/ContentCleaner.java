@@ -10,26 +10,25 @@ class ContentCleaner extends Cleaner {
         document = doc;
     }
 
-    public Document clean() {
-        cleanBodyClasses();
+    Document clean() {
+        cleanBodyAttrs();
         cleanArticleTags();
-        removeDropCaps();
         cleanBadTags();
         unwrapTextTags();
         removeEmptyTags();
         removeElements();
-        removeNodesRegex();
         cleanParaSpans();
         divToPara();
 
         return document;
     }
 
-    private void cleanBodyClasses() {
+    private void cleanBodyAttrs() {
         Elements elements = document.getElementsByTag("body");
 
         if(elements.size() > 0) {
             elements.get(0).removeAttr("class");
+            elements.get(0).removeAttr("id");
         }
     }
 
@@ -42,11 +41,6 @@ class ContentCleaner extends Cleaner {
             element.removeAttr("class");
         }
 
-
-        elements = document.getElementsByTag("header");
-        elements.addAll(document.getElementsByTag("footer"));
-        elements.addAll(document.getElementsByTag("form"));
-
         elements.remove();
     }
 
@@ -55,14 +49,6 @@ class ContentCleaner extends Cleaner {
 
         elements.addAll(document.getElementsByTag("em"));
         elements.addAll(document.getElementsByTag("span"));
-
-        for(Element element: elements) {
-            element.unwrap();
-        }
-    }
-
-    private void removeDropCaps() {
-        Elements elements = document.select("span[class~=dropcap], span[class~=drop_cap]");
 
         for(Element element: elements) {
             element.unwrap();
@@ -90,21 +76,6 @@ class ContentCleaner extends Cleaner {
         }
     }
 
-    private void removeNodesRegex() {
-        Elements elements = document.getElementsMatchingOwnText("//*[re:test(@%s, id, 'i')]");
-        System.out.println("regex " + elements.size());
-
-        for(Element element: elements) {
-            element.remove();
-        }
-
-        elements = document.getElementsMatchingOwnText("//*[re:test(@%s, class, 'i')]");
-
-        for(Element element: elements) {
-            element.remove();
-        }
-    }
-
     private void cleanParaSpans() {
         Elements elements = document.select("p span");
 
@@ -112,19 +83,27 @@ class ContentCleaner extends Cleaner {
             element.unwrap();
         }
     }
+
     private void divToPara() {
         Elements elements = document.select("div");
 
         document.clearAttributes();
 
         for(Element element: elements) {
+            Element childElement = new Element("div");
             Elements childs = document.getElementsByTag("p");
 
-            for(Element child: childs) {
-                child.unwrap();
-            }
+            if(childs.size() > 1) {
+                for(Element child: childs) {
+                    childElement.appendElement("p").html(child.html());
+                    child.unwrap();
+                }
 
-            element.wrap("<p></p>");
+                element.html(childElement.html());
+            }
+            else {
+                element.wrap("<p></p>");
+            }
         }
     }
 

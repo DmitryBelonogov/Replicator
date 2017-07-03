@@ -30,10 +30,8 @@ public class ArticleLoader {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if(response.body() != null) {
-                    result[0] = response.body().string();
-                    create(result[0]);
-                }
+                result[0] = response.body().string();
+                create(result[0]);
             }
         });
     }
