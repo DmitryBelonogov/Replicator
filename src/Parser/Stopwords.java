@@ -7,15 +7,15 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Stopwords {
+class Stopwords {
 
     private String[] langs = ("ar da de el en es fi fr he hu id it ko mk nb nl no pt ru sv tr vi zh").split(" ");
 
-    public HashMap<String, ArrayList<String>> stopwords;
+    HashMap<String, ArrayList<String>> stopwords;
 
     private static Stopwords ourInstance = new Stopwords();
 
-    public static Stopwords getInstance() {
+    static Stopwords getInstance() {
         return ourInstance;
     }
 
@@ -44,11 +44,7 @@ public class Stopwords {
         }
     }
 
-    public ArrayList<String> get(String lang) {
-        return stopwords.get(lang);
-    }
-
-    public int getStopwordsCount(String lang, String text) {
+    int getStopwordsCount(String lang, String text) {
         int count = 0;
         ArrayList<String> stopWords = stopwords.get(lang);
         String[] words = text.replaceAll("\\p{Punct}|\\d", " ").toLowerCase().split("\\s+");
@@ -66,7 +62,7 @@ public class Stopwords {
         return count;
     }
 
-    public int getWordsCount(String text) {
+    int getWordsCount(String text) {
         String[] words = text.replaceAll("\\p{Punct}|\\d", " ").split("\\s+");
 
         return words.length;

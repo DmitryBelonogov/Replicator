@@ -1,25 +1,45 @@
 package Parser;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 class Extractor {
 
-    String lang;
-    Document document;
-    Element contentElement;
+    private Document document;
+    private Element contentElement;
+    private String lang;
 
-    Extractor() { }
-
-    void clean() {
-        ContentCleaner cleaner = new ContentCleaner(document);
-        document = cleaner.clean();
+    Extractor(String htmlContent) {
+        document = Jsoup.parse(htmlContent);
     }
 
-    String detectLang(String text) {
+    String getLang() {
+        List<String> langElements = new ArrayList<>();
+
+        langElements.add(getElementAttr("html", "lang"));
+        langElements.add(getElementAttr("html", "xml:lang"));
+
+        Collections.sort(langElements, new StringLengthComp());
+
+        if(langElements.size() == 0 ||
+                langElements.get(langElements.size() - 1).length() < 2) {
+            lang = detectLang(document.getElementsByTag("body").text());
+        }
+        else  {
+            lang = langElements.get(langElements.size() - 1).substring(0, 2).toLowerCase();
+        }
+
+        return lang;
+    }
+
+    private String detectLang(String text) {
         String lang = "";
         int stopwordsCount = 0;
 
@@ -30,27 +50,138 @@ class Extractor {
                 stopwordsCount = count;
                 lang = wordsLang;
             }
-
-            System.out.println("Check " + wordsLang + " " + count);
         }
 
         return lang;
     }
 
-    String generateKeywords() {
+    String getTitle() {
+        List<String> titleElements = new ArrayList<>();
+
+        titleElements.add(document.getElementsByTag("title").text());
+
+        if(titleElements.get(0).length() > 0) {
+            return splitTitle(titleElements.get(titleElements.size() - 1));
+        }
+
+        titleElements.addAll(document.getElementsByTag("h1").eachText());
+        titleElements.add(getElementAttr("title", "content"));
+        titleElements.add(getMetaProperty("og:title"));
+        titleElements.add(getMetaName("og:title"));
+
+        Collections.sort(titleElements, new StringLengthComp());
+
+        return splitTitle(titleElements.get(titleElements.size() - 1));
+    }
+
+    private String splitTitle(String title) {
+        String splitter = "";
+
+        if(title.contains("|")) {
+            splitter = String.valueOf(" \\| ");
+        }
+        else if(title.contains("_")) {
+            splitter = " _ ";
+        }
+        else if(title.contains("/")) {
+            splitter = " / ";
+        }
+        else if(title.contains("»")) {
+            splitter = " » ";
+        }
+        else if(title.contains("–")) {
+            splitter = " – ";
+        }
+        else if(title.contains(" - ")) {
+            splitter = " - ";
+        }
+
+        return !splitter.equals("") ? title.split(splitter)[0] : title;
+    }
+
+    String getDescription() {
+        ArrayList<String> descElements = new ArrayList<>();
+
+        descElements.add(getMetaName("twitter:description"));
+        descElements.add(getMetaName("description"));
+        descElements.add(getMetaProperty("og:description"));
+
+        Collections.sort(descElements, new StringLengthComp());
+
+        return descElements.get(descElements.size() - 1);
+    }
+
+    String getContent() {
+        if(contentElement == null) {
+            document = new Cleaner(document).clean();
+            contentElement = calculateBestElement();
+        }
+
+        return contentElement.html();
+    }
+
+    String getContentText() {
+        if(contentElement == null) {
+            getContent();
+        }
+
+        return contentElement.text();
+    }
+
+    String getLeadImage() {
+        String image;
+
+        image = getMetaProperty("og:image");
+        if(image.length() > 0) {
+            return image;
+        }
+
+        image = getMetaName("og:image");
+        if(image.length() > 0) {
+            return image;
+        }
+
+        if(contentElement == null) {
+            getContent();
+        }
+
+        Element imageElement = contentElement.getElementsByTag("img").first();
+        if(imageElement != null) {
+            return imageElement.attr("src");
+        }
+
         return "";
     }
 
-    Element calculateBestElement() {
-        System.out.println("calculateBestElement");
+    String getKeywords() {
+        StringBuilder keywords = new StringBuilder();
+        ArrayList<String> keywordsList = new ArrayList<>();
+
+        keywordsList.addAll(getMetaNames("keywords"));
+        keywordsList.addAll(getMetaProperties("article:tag"));
+
+        if(keywordsList.size() == 0) {
+            //return generateKeywords();
+            return "";
+        }
+
+        for(String key: keywordsList) {
+            keywords.append(key).append(", ");
+        }
+
+        return keywords.toString().substring(0, keywords.length() - 2);
+    }
+
+    private Element calculateBestElement() {
         Elements elementsText = new Elements();
         Elements elementsToCheck = getElementsToCheck();
 
         for(Element elementToCheck: elementsToCheck) {
-            if(Stopwords.getInstance().getStopwordsCount(lang, elementToCheck.text()) > 4 &&
-                    !isHighlinkDensity(elementToCheck)) {
-                elementToCheck.attr("isHighlinkDensity", String.valueOf(isHighlinkDensity(elementToCheck)));
-                elementsText.add(elementToCheck);
+            if(Stopwords.getInstance().getStopwordsCount(lang, elementToCheck.text()) > 4) {
+                if (!isHighlinkDensity(elementToCheck)) {
+                    elementToCheck.attr("isHighlinkDensity", String.valueOf(isHighlinkDensity(elementToCheck)));
+                    elementsText.add(elementToCheck);
+                }
             }
         }
 
@@ -77,11 +208,11 @@ class Extractor {
             return false;
         }
 
-        int wordsCount = Stopwords.getInstance().getWordsCount(element.ownText());
+        int wordsCount = Stopwords.getInstance().getWordsCount(element.text());
         int linkWordsCount = 0;
 
         for(Element link: linkElements) {
-            linkWordsCount += Stopwords.getInstance().getWordsCount(link.ownText());
+            linkWordsCount += Stopwords.getInstance().getWordsCount(link.text());
         }
 
         return (float) linkWordsCount / (float) wordsCount * (float) linkElements.size() >= 1;
@@ -99,20 +230,20 @@ class Extractor {
         return elements;
     }
 
-    String getElementAttr(String element, String attr) {
+    private String getElementAttr(String element, String attr) {
         Elements elements = document.getElementsByTag(element);
 
-        return elements.get(0).attr(attr) != null ? elements.get(0).attr(attr) : "";
+        return elements.size() > 0 ? elements.get(0).attr(attr) : "";
     }
 
-    String getMetaName(String metaTag) {
+    private String getMetaName(String metaTag) {
         Elements elements = document.select("meta[name=" + metaTag + "]");
 
         return elements.size() > 0 ?
                 elements.get(0).attr("content") : "";
     }
 
-    ArrayList<String> getMetaNames(String metaTag) {
+    private ArrayList<String> getMetaNames(String metaTag) {
         ArrayList<String> values = new ArrayList<>();
 
         Elements elements = document.select("meta[name=" + metaTag + "]");
@@ -124,7 +255,7 @@ class Extractor {
         return values;
     }
 
-    ArrayList<String> getMetaProperties(String metaTag) {
+    private ArrayList<String> getMetaProperties(String metaTag) {
         ArrayList<String> values = new ArrayList<>();
 
         Elements elements = document.select("meta[property=" + metaTag + "]");
@@ -136,10 +267,19 @@ class Extractor {
         return values;
     }
 
-    String getMetaProperty(String metaTag) {
+    private String getMetaProperty(String metaTag) {
         Elements elements = document.select("meta[property=" + metaTag + "]");
 
         return elements.size() > 0 ?
                 elements.get(0).attr("content") : "";
     }
+
+    public class StringLengthComp implements Comparator<String> {
+
+        public int compare(String o1, String o2) {
+            return Integer.compare(o1.length(), o2.length());
+        }
+
+    }
+
 }

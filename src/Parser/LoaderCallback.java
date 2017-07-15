@@ -1,6 +1,6 @@
 package Parser;
 
-public interface ArticleLoaderCallback {
+public interface LoaderCallback {
 
     void onLoaded(Article article);
 

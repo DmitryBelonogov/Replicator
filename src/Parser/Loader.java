@@ -9,12 +9,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
-public class ArticleLoader {
+public class Loader {
 
     private String url;
-    private ArticleLoaderCallback callback;
+    private LoaderCallback callback;
 
-    public ArticleLoader(String url, ArticleLoaderCallback callback) {
+    public Loader(String url, LoaderCallback callback) {
         this.url = url;
         this.callback = callback;
 
@@ -36,13 +36,12 @@ public class ArticleLoader {
         });
     }
 
-    public Article fromHtml(String html) {
-        return new Article(html);
-    }
-
     private void create(String html) {
+        long startTime = System.currentTimeMillis();
         Article article = new Article(html);
         article.url = url;
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total execution time: " + (endTime-startTime) + "ms");
 
         callback.onLoaded(article);
     }
@@ -51,15 +50,15 @@ public class ArticleLoader {
         final X509TrustManager[] trustAllCerts = new X509TrustManager[]{
                 new X509TrustManager() {
                     @Override
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                    public void checkClientTrusted(X509Certificate[] chain, String authType)
                             throws CertificateException { }
 
                     @Override
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType)
+                    public void checkServerTrusted(X509Certificate[] chain, String authType)
                             throws CertificateException { }
 
                     @Override
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                    public X509Certificate[] getAcceptedIssuers() {
                         return new X509Certificate[0];
                     }
                 }
@@ -77,7 +76,12 @@ public class ArticleLoader {
             builder = new OkHttpClient()
                     .newBuilder()
                     .sslSocketFactory(sslSocketFactory, trustAllCerts[0])
-                    .hostnameVerifier((hostname, session) -> true);
+                    .hostnameVerifier(new HostnameVerifier() {
+                        @Override
+                        public boolean verify(String hostname, SSLSession session) {
+                            return true;
+                        }
+                    });
 
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             e.printStackTrace();

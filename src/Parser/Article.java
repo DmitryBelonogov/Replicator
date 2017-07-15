@@ -12,7 +12,7 @@ public class Article {
     public String leadImage;
 
     public Article(String html) {
-        ContentExtractor extractor = new ContentExtractor(html);
+        Extractor extractor = new Extractor(html);
 
         lang = extractor.getLang();
         title = extractor.getTitle();
