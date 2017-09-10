@@ -7,8 +7,8 @@ import org.jsoup.select.Elements;
 
 class Cleaner {
 
-    private String[] tagsToRemove = ("script style link form header footer").split(" ");
-    private String[] elementsToRemove = ("comment header footer menu banner auth subscribe nav follow share meta").split(" ");
+    private String[] tagsToRemove = ("script style link form header footer noscript").split(" ");
+    private String[] elementsToRemove = ("sidebar comment header footer menu banner auth subscribe nav follow share meta").split(" ");
 
     private Document document;
 
@@ -21,8 +21,6 @@ class Cleaner {
         removeComments(document);
         unwrapTextTags();
         unwrapParagraphs();
-
-        document.clearAttributes();
 
         return document;
     }
@@ -91,6 +89,8 @@ class Cleaner {
                     child.unwrap();
                 }
             }
+
+            element.wrap("<p></p>");
         }
     }
 

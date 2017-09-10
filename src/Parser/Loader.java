@@ -38,11 +38,12 @@ public class Loader {
 
     private void create(String html) {
         long startTime = System.currentTimeMillis();
+
         Article article = new Article(html);
         article.url = url;
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total execution time: " + (endTime-startTime) + "ms");
 
+        long endTime = System.currentTimeMillis();
+        System.out.println("Total parsing time: " + (endTime-startTime) + "ms");
         callback.onLoaded(article);
     }
 
@@ -83,7 +84,10 @@ public class Loader {
                         }
                     });
 
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        catch (KeyManagementException e){
             e.printStackTrace();
         }
 

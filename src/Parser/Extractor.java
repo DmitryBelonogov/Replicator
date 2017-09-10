@@ -21,7 +21,7 @@ class Extractor {
     }
 
     String getLang() {
-        List<String> langElements = new ArrayList<>();
+        List<String> langElements = new ArrayList<String>();
 
         langElements.add(getElementAttr("html", "lang"));
         langElements.add(getElementAttr("html", "xml:lang"));
@@ -56,7 +56,7 @@ class Extractor {
     }
 
     String getTitle() {
-        List<String> titleElements = new ArrayList<>();
+        List<String> titleElements = new ArrayList<String>();
 
         titleElements.add(document.getElementsByTag("title").text());
 
@@ -100,7 +100,7 @@ class Extractor {
     }
 
     String getDescription() {
-        ArrayList<String> descElements = new ArrayList<>();
+        ArrayList<String> descElements = new ArrayList<String>();
 
         descElements.add(getMetaName("twitter:description"));
         descElements.add(getMetaName("description"));
@@ -155,7 +155,7 @@ class Extractor {
 
     String getKeywords() {
         StringBuilder keywords = new StringBuilder();
-        ArrayList<String> keywordsList = new ArrayList<>();
+        ArrayList<String> keywordsList = new ArrayList<String>();
 
         keywordsList.addAll(getMetaNames("keywords"));
         keywordsList.addAll(getMetaProperties("article:tag"));
@@ -176,11 +176,11 @@ class Extractor {
         Elements elementsText = new Elements();
         Elements elementsToCheck = getElementsToCheck();
 
-        for(Element elementToCheck: elementsToCheck) {
-            if(Stopwords.getInstance().getStopwordsCount(lang, elementToCheck.text()) > 4) {
-                if (!isHighlinkDensity(elementToCheck)) {
-                    elementToCheck.attr("isHighlinkDensity", String.valueOf(isHighlinkDensity(elementToCheck)));
-                    elementsText.add(elementToCheck);
+        int size = elementsToCheck.size();
+        for(int i = 0; i < size; i++) {
+            if(Stopwords.getInstance().getStopwordsCount(lang, elementsToCheck.get(i).text()) > 2) {
+                if (!isHighlinkDensity(elementsToCheck.get(i))) {
+                    elementsText.add(elementsToCheck.get(i));
                 }
             }
         }
@@ -188,13 +188,13 @@ class Extractor {
         int topScore = 0;
         Element topElement = new Element("p");
 
-        for(Element elementText: elementsText) {
-            int score = Stopwords.getInstance().getStopwordsCount(lang, elementText.text());
+        size = elementsText.size();
+        for(int i = 0; i < size; i++) {
+            int score = Stopwords.getInstance().getStopwordsCount(lang, elementsText.get(i).text());
 
-            elementText.attr("score", String.valueOf(score));
             if(score > topScore) {
                 topScore = score;
-                topElement = elementText;
+                topElement = elementsText.get(i);
             }
         }
 
@@ -224,7 +224,6 @@ class Extractor {
         elements.addAll(document.getElementsByTag("p"));
         elements.addAll(document.getElementsByTag("pre"));
         elements.addAll(document.getElementsByTag("td"));
-        elements.addAll(document.getElementsByTag("div"));
         elements.addAll(document.getElementsByTag("section"));
 
         return elements;
@@ -244,7 +243,7 @@ class Extractor {
     }
 
     private ArrayList<String> getMetaNames(String metaTag) {
-        ArrayList<String> values = new ArrayList<>();
+        ArrayList<String> values = new ArrayList<String>();
 
         Elements elements = document.select("meta[name=" + metaTag + "]");
 
@@ -256,7 +255,7 @@ class Extractor {
     }
 
     private ArrayList<String> getMetaProperties(String metaTag) {
-        ArrayList<String> values = new ArrayList<>();
+        ArrayList<String> values = new ArrayList<String>();
 
         Elements elements = document.select("meta[property=" + metaTag + "]");
 
@@ -274,7 +273,7 @@ class Extractor {
                 elements.get(0).attr("content") : "";
     }
 
-    public class StringLengthComp implements Comparator<String> {
+    public static class StringLengthComp implements Comparator<String> {
 
         public int compare(String o1, String o2) {
             return Integer.compare(o1.length(), o2.length());

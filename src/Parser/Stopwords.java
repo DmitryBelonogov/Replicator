@@ -4,8 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 class Stopwords {
 
@@ -45,17 +44,29 @@ class Stopwords {
     }
 
     int getStopwordsCount(String lang, String text) {
-        int count = 0;
         ArrayList<String> stopWords = stopwords.get(lang);
         String[] words = text.replaceAll("\\p{Punct}|\\d", " ").toLowerCase().split("\\s+");
+        String[] swords = new String[stopWords.size()];
 
-        for(String word: words) {
-            for(String stopWord: stopWords) {
-                if(word.length() == stopWord.length()) {
-                    if (word.equals(stopWord)) {
-                        count++;
-                    }
-                }
+        swords = stopWords.toArray(swords);
+
+        int count = 0;
+
+        Map<String, Integer> counts = new HashMap<>();
+
+        for(int i = 0; i < words.length; i++) {
+            if (counts.containsKey(words[i])) {
+                counts.put(words[i], counts.get(words[i]) + 1);
+            } else {
+                counts.put(words[i], 1);
+            }
+        }
+
+        for(String word: counts.keySet()) {
+            int i = Arrays.binarySearch(swords, word);
+
+            if(i != -1) {
+                count += counts.get(word);
             }
         }
 
