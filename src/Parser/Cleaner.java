@@ -1,14 +1,16 @@
 package Parser;
 
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.jsoup.safety.Whitelist;
 import org.jsoup.select.Elements;
 
 class Cleaner {
 
     private String[] tagsToRemove = ("script style link form header footer noscript").split(" ");
-    private String[] elementsToRemove = ("sidebar comment header footer menu banner auth subscribe nav follow share meta").split(" ");
+    private String[] elementsToRemove = ("social mailchimp calendar sidebar-post mistape comment header footer menu banner auth subscribe nav follow share meta").split(" ");
 
     private Document document;
 
@@ -22,11 +24,13 @@ class Cleaner {
         unwrapTextTags();
         unwrapParagraphs();
 
+        //document.clearAttributes();
+
         return document;
     }
 
     private void removeComments(Node node) {
-        for (int i = 0; i < node.childNodes().size();) {
+        /*for (int i = 0; i < node.childNodes().size();) {
             Node child = node.childNode(i);
 
             if (child.nodeName().equals("#comment")) {
@@ -36,7 +40,7 @@ class Cleaner {
                 removeComments(child);
                 i++;
             }
-        }
+        }*/
     }
 
     private void removeTags() {
@@ -65,6 +69,8 @@ class Cleaner {
         for(String tag: tagsToRemove) {
             document.getElementsByTag(tag).remove();
         }
+
+        document = Jsoup.parse(Jsoup.clean(document.html(), Whitelist.relaxed()));
     }
 
     private void unwrapTextTags() {
@@ -90,7 +96,7 @@ class Cleaner {
                 }
             }
 
-            element.wrap("<p></p>");
+            //element.wrap("<p></p>");
         }
     }
 

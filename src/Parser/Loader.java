@@ -21,29 +21,45 @@ public class Loader {
         startLoading();
     }
 
+    public Loader() {
+    }
+
+    public void set(String url, LoaderCallback callback) {
+        this.url = url;
+        this.callback = callback;
+        startLoading();
+    }
+
     private void startLoading() {
+        final long startTime = System.currentTimeMillis();
         final String[] result = new String[1];
-        Request request = new Request.Builder().url(url).build();
+        final Request request = new Request.Builder().url(url).build();
 
         getUnsafeOkHttpClient().newCall(request).enqueue(new Callback() {
-            @Override public void onFailure(Call call, IOException e) { }
+            @Override public void onFailure(Call call, IOException e) { callback.onFailure(); }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                result[0] = response.body().string();
-                create(result[0]);
+                if(response.isSuccessful()) {
+                    result[0] = response.body().string();
+                    long endTime = System.currentTimeMillis();
+                    System.out.println("Total loading time: " + (endTime-startTime) + "ms");
+                    create(result[0]);
+                }
+                else {
+                    callback.onFailure();
+                }
             }
         });
     }
 
     private void create(String html) {
         long startTime = System.currentTimeMillis();
-
         Article article = new Article(html);
         article.url = url;
-
         long endTime = System.currentTimeMillis();
-        System.out.println("Total parsing time: " + (endTime-startTime) + "ms");
+        System.out.println("Total execution time: " + (endTime-startTime) + "ms");
+
         callback.onLoaded(article);
     }
 

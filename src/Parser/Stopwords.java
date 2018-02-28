@@ -10,27 +10,30 @@ class Stopwords {
 
     private String[] langs = ("ar da de el en es fi fr he hu id it ko mk nb nl no pt ru sv tr vi zh").split(" ");
 
-    HashMap<String, ArrayList<String>> stopwords;
+    public HashMap<String, ArrayList<String>> stopwords;
 
     private static Stopwords ourInstance = new Stopwords();
 
-    static Stopwords getInstance() {
+    public static Stopwords getInstance() {
         return ourInstance;
     }
 
     private Stopwords() {
         stopwords = new HashMap<>();
 
-        try {
+         try {
             populate();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+         } catch (IOException e) {
+              e.printStackTrace();
+         }
     }
 
     private void populate() throws IOException {
         for(String lang: langs) {
             InputStream langFile = getClass().getResourceAsStream(lang + ".txt");
+            if(langFile == null) {
+                return;
+            }
             BufferedReader reader = new BufferedReader(new InputStreamReader(langFile));
             ArrayList<String> words = new ArrayList<>();
             String word;
@@ -43,9 +46,9 @@ class Stopwords {
         }
     }
 
-    int getStopwordsCount(String lang, String text) {
+    synchronized int getStopwordsCount(String lang, String text) {
         ArrayList<String> stopWords = stopwords.get(lang);
-        String[] words = text.replaceAll("\\p{Punct}|\\d", " ").toLowerCase().split("\\s+");
+        String[] words = getWords(text);
         String[] swords = new String[stopWords.size()];
 
         swords = stopWords.toArray(swords);
@@ -54,11 +57,11 @@ class Stopwords {
 
         Map<String, Integer> counts = new HashMap<>();
 
-        for(int i = 0; i < words.length; i++) {
-            if (counts.containsKey(words[i])) {
-                counts.put(words[i], counts.get(words[i]) + 1);
+        for (String word1 : words) {
+            if (counts.containsKey(word1)) {
+                counts.put(word1, counts.get(word1) + 1);
             } else {
-                counts.put(words[i], 1);
+                counts.put(word1, 1);
             }
         }
 
@@ -73,10 +76,41 @@ class Stopwords {
         return count;
     }
 
-    int getWordsCount(String text) {
-        String[] words = text.replaceAll("\\p{Punct}|\\d", " ").split("\\s+");
+    public static synchronized int getWordsCount(String text) {
+        return getWords(text).length;
+    }
 
-        return words.length;
+    private static StringBuilder stringBuilder = new StringBuilder();
+
+    private synchronized static String[] getWords(String text) {
+        char c;
+        int size = text.length();
+        stringBuilder.setLength(0);
+
+        for(int i = 0; i < size; i++) {
+            while(i < size && !isPunct(c = text.charAt(i))) {
+                stringBuilder.append(c);
+                i++;
+            }
+
+            while(i < size && isPunct(text.charAt(i))) {
+                i++;
+            }
+
+            stringBuilder.append(' ');
+        }
+
+        return stringBuilder.toString().split(" ");
+    }
+
+    private static boolean isPunct(char c) {
+        int ascii = (int) c;
+
+        return (ascii >= 33 && ascii <= 47) ||
+                (ascii >= 58 && ascii <= 64) ||
+                (ascii >= 91 && ascii <= 96) ||
+                (ascii >= 123 && ascii <= 126);
+
     }
 
 }
