@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/WebParser.iml" filepath="$PROJECT_DIR$/WebParser.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.nougust3.replicator.iml" filepath="$PROJECT_DIR$/.idea/modules/com.nougust3.replicator.iml" />
     </modules>
   </component>
 </project>
