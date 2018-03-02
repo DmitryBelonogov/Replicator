@@ -16,6 +16,7 @@ public class Loader {
 
     private String url;
     private LoaderCallback callback;
+    private Options options;
 
     public Loader(String url, LoaderCallback callback) {
         this.url = url;
@@ -38,6 +39,17 @@ public class Loader {
         startLoading();
     }
 
+    public void load(String html, Options options) {
+        create(html, options);
+    }
+
+    public void set(String url, Options options, LoaderCallback callback) {
+        this.url = url;
+        this.callback = callback;
+        this.options = options;
+        startLoading();
+    }
+
     private void startLoading() {
         final String[] result = new String[1];
         final Request request = new Request.Builder().url(url).build();
@@ -50,7 +62,13 @@ public class Loader {
                 if(response.isSuccessful()) {
                     if(response.body() != null)
                     result[0] = response.body().string();
-                    create(result[0]);
+
+                    if(options == null) {
+                        create(result[0]);
+                    }
+                    else {
+                        create(result[0], options);
+                    }
                 }
                 else {
                     callback.onFailure();
@@ -61,6 +79,13 @@ public class Loader {
 
     private void create(String html) {
         Article article = new Article(html);
+        article.url = url;
+
+        callback.onLoaded(article);
+    }
+
+    private void create(String html, Options options) {
+        Article article = new Article(html, options);
         article.url = url;
 
         callback.onLoaded(article);
