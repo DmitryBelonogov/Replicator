@@ -14,8 +14,19 @@ import java.security.cert.X509Certificate;
 
 public class Loader {
 
+    private static OkHttpClient httpClient;
+
+    public static OkHttpClient getHttpClient() {
+        if(httpClient == null) {
+            return getUnsafeOkHttpClient();
+        }
+
+        return httpClient;
+    }
+
     private String url;
     private LoaderCallback callback;
+    private Options options;
 
     public Loader(String url, LoaderCallback callback) {
         this.url = url;
@@ -38,11 +49,22 @@ public class Loader {
         startLoading();
     }
 
+    public void load(String html, Options options) {
+        create(html, options);
+    }
+
+    public void set(String url, Options options, LoaderCallback callback) {
+        this.url = url;
+        this.callback = callback;
+        this.options = options;
+        startLoading();
+    }
+
     private void startLoading() {
         final String[] result = new String[1];
         final Request request = new Request.Builder().url(url).build();
 
-        getUnsafeOkHttpClient().newCall(request).enqueue(new Callback() {
+        getHttpClient().newCall(request).enqueue(new Callback() {
             @Override public void onFailure(Call call, IOException e) { callback.onFailure(); }
 
             @Override
@@ -50,7 +72,13 @@ public class Loader {
                 if(response.isSuccessful()) {
                     if(response.body() != null)
                     result[0] = response.body().string();
-                    create(result[0]);
+
+                    if(options == null) {
+                        create(result[0]);
+                    }
+                    else {
+                        create(result[0], options);
+                    }
                 }
                 else {
                     callback.onFailure();
@@ -61,6 +89,13 @@ public class Loader {
 
     private void create(String html) {
         Article article = new Article(html);
+        article.url = url;
+
+        callback.onLoaded(article);
+    }
+
+    private void create(String html, Options options) {
+        Article article = new Article(html, options);
         article.url = url;
 
         callback.onLoaded(article);
@@ -108,7 +143,10 @@ public class Loader {
         }
 
         assert builder != null;
-        return builder.build();
+
+        httpClient = builder.build();
+
+        return httpClient;
     }
 
 }

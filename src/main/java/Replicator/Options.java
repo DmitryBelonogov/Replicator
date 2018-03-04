@@ -9,6 +9,8 @@ public class Options {
     public boolean loadTitle;
     public boolean loadContent;
 
+    public boolean useNetwork;
+
     public Options() {
         loadTags = true;
         loadImages = true;
@@ -16,6 +18,8 @@ public class Options {
         loadDescription = true;
         loadTitle = true;
         loadContent = true;
+
+        useNetwork = true;
     }
 
 }

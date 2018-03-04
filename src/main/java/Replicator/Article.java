@@ -1,5 +1,6 @@
 package Replicator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Article {
@@ -8,24 +9,36 @@ public class Article {
     public String lang;
     public String title;
     public String description;
-    public String content;
     public String author;
-    public String contentText;
     public String leadImage;
+    public String content = "";
+    public String contentText = "";
 
-    public List<String> tags;
+    public List<String> tags = new ArrayList<>();
 
     public Article(String html) {
-        Extractor extractor = new Extractor(html);
+        get(html, new Options());
+    }
+    public Article(String html, Options options) {
+        get(html, options);
+    }
+
+    private void get(String html, Options options) {
+        Extractor extractor = new Extractor(html, options);
 
         lang = extractor.getLang();
-        tags = extractor.getTags();
-        title = extractor.getTitle();
-        description = extractor.getDescription();
-        author = extractor.getAuthor();
-        content = extractor.getContent();
-        contentText = extractor.getContentText();
-        leadImage = extractor.getLeadImage();
+
+        title = options.loadTitle ? extractor.getTitle() : "";
+        description = options.loadDescription ? extractor.getDescription() : "";
+        author = options.loadAuthor ? extractor.getAuthor() : "";
+
+        if(options.loadTags) tags = extractor.getTags();
+        if(options.loadContent) {
+            content = extractor.getContent();
+            contentText = extractor.getContentText();
+        }
+        
+        leadImage = options.loadImages ? extractor.getLeadImage() : "";
     }
 
 }

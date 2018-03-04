@@ -21,8 +21,11 @@ class Extractor {
     private Element contentElement;
     private String lang;
     private Elements metaTags;
+    private Options options;
 
-    Extractor(String htmlContent) {
+    Extractor(String htmlContent, Options options) {
+        this.options = options;
+
         document = Jsoup.parse(htmlContent);
         metaTags = document.getElementsByTag("meta");
     }
@@ -66,7 +69,7 @@ class Extractor {
     }
 
     String getLeadImage() {
-        return new ImagesExtractor(document, metaTags).get();
+        return new ImagesExtractor(document, metaTags, contentElement, options).get();
     }
 
 }
