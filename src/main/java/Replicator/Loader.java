@@ -14,6 +14,16 @@ import java.security.cert.X509Certificate;
 
 public class Loader {
 
+    private static OkHttpClient httpClient;
+
+    public static OkHttpClient getHttpClient() {
+        if(httpClient == null) {
+            return getUnsafeOkHttpClient();
+        }
+
+        return httpClient;
+    }
+
     private String url;
     private LoaderCallback callback;
     private Options options;
@@ -54,7 +64,7 @@ public class Loader {
         final String[] result = new String[1];
         final Request request = new Request.Builder().url(url).build();
 
-        getUnsafeOkHttpClient().newCall(request).enqueue(new Callback() {
+        getHttpClient().newCall(request).enqueue(new Callback() {
             @Override public void onFailure(Call call, IOException e) { callback.onFailure(); }
 
             @Override
@@ -133,7 +143,10 @@ public class Loader {
         }
 
         assert builder != null;
-        return builder.build();
+
+        httpClient = builder.build();
+
+        return httpClient;
     }
 
 }

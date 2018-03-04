@@ -24,20 +24,21 @@ public class Article {
     }
 
     private void get(String html, Options options) {
-        Extractor extractor = new Extractor(html);
+        Extractor extractor = new Extractor(html, options);
 
         lang = extractor.getLang();
 
         title = options.loadTitle ? extractor.getTitle() : "";
         description = options.loadDescription ? extractor.getDescription() : "";
         author = options.loadAuthor ? extractor.getAuthor() : "";
-        leadImage = options.loadImages ? extractor.getLeadImage() : "";
 
         if(options.loadTags) tags = extractor.getTags();
         if(options.loadContent) {
             content = extractor.getContent();
             contentText = extractor.getContentText();
         }
+        
+        leadImage = options.loadImages ? extractor.getLeadImage() : "";
     }
 
 }
